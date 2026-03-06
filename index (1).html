@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Squad Showcase</title>
+  <link rel="stylesheet" href="./style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --blue-bright: #00d4ff;
+      --blue-mid:    #0066ff;
+    }
+
+    body {
+      height: 100svh !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+      font-family: 'Rajdhani', sans-serif !important;
+    }
+
+    /* ═══════════════════════════════════
+       LOGO — pinned behind EVERYTHING
+    ═══════════════════════════════════ */
+    #bg-logo {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: -999;        /* behind every single element */
+      pointer-events: none;
+    }
+
+    #bg-logo img {
+      width: min(85vw, 680px);
+      height: auto;
+      opacity: 0.5;         /* clearly visible, full color */
+      /* NO grayscale, NO sepia — pure original colors */
+    }
+
+    /* ═══════════════════════════════════
+       CHARACTER NAMES
+    ═══════════════════════════════════ */
+    .names {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 28vh !important;
+      display: grid !important;
+      place-content: center !important;
+      pointer-events: none !important;
+      z-index: 200 !important;
+      margin: 0 !important;
+    }
+
+    .names h2 {
+      grid-area: 1/1;
+      text-align: center;
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 900;
+      font-size: clamp(2rem, 7vw, 6.5rem);
+      text-transform: uppercase;
+      font-style: normal;
+      background: linear-gradient(135deg, var(--blue-bright) 0%, var(--blue-mid) 60%, #fff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 20px var(--blue-bright)) drop-shadow(0 0 40px var(--blue-mid));
+      opacity: 0;
+      translate: 0 20px;
+      transition: opacity 400ms ease, translate 400ms ease;
+      margin: 0;
+      letter-spacing: 0.08em;
+    }
+
+    .names h2.active {
+      opacity: 1;
+      translate: 0 0;
+    }
+
+    /* ═══════════════════════════════════
+       WRAPPER
+    ═══════════════════════════════════ */
+    .wrapper {
+      position: fixed !important;
+      inset: auto 0 0 0 !important;
+      margin: 0 auto !important;
+      width: 100vw !important;
+      max-width: 100vw !important;
+      height: 75vh !important;
+      container-type: size !important;
+    }
+
+    .wrapper::after {
+      top: 0 !important;
+      background: linear-gradient(90deg, #0000, var(--blue-bright), #0000) !important;
+    }
+
+    /* ═══════════════════════════════════
+       CHARACTERS
+    ═══════════════════════════════════ */
+    .wrapper .character {
+      --focus: 0;
+      animation: none !important;
+      scale: calc(0.72 + var(--focus) * 0.28);
+      z-index: calc(1 + var(--focus) * 100);
+      translate: var(--item-x) 0;
+      filter:
+        sepia(calc(1 - var(--focus)))
+        blur(calc((1 - var(--focus)) * 2.5px))
+        brightness(calc(0.55 + var(--focus) * 0.45));
+      cursor: pointer;
+      transition:
+        scale     500ms cubic-bezier(0.34, 1.56, 0.64, 1),
+        translate 500ms cubic-bezier(0.34, 1.56, 0.64, 1),
+        z-index   400ms ease-in-out,
+        filter    600ms ease-in-out,
+        opacity   400ms ease;
+    }
+
+    .wrapper .character img {
+      width: 100%;
+      height: 73vh;
+      object-fit: contain;
+      object-position: bottom;
+      display: block;
+    }
+
+    /* ═══════════════════════════════════
+       INFO CARD
+    ═══════════════════════════════════ */
+    .wrapper .character .data {
+      transition: scale 300ms ease-in-out 100ms;
+      scale: 0 1;
+      border-color: var(--blue-bright) !important;
+      background-color: rgba(0, 80, 200, 0.18) !important;
+    }
+
+    .wrapper .character .data h3 {
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 700;
+      color: var(--blue-bright) !important;
+      text-shadow: 0 0 12px var(--blue-bright);
+    }
+
+    .wrapper .character .data p,
+    .wrapper .character .data label {
+      font-family: 'Rajdhani', sans-serif !important;
+      font-weight: 600;
+      color: #cce8ff !important;
+    }
+
+    .wrapper .character .data label {
+      color: var(--blue-bright) !important;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+    }
+
+    .wrapper .character .data .notes {
+      color: #a8d8ff !important;
+      font-style: italic;
+    }
+
+    .wrapper .character.focused       { --focus: 1; }
+    .wrapper .character.focused .data { scale: 1 1; }
+
+    .wrapper.has-focus .character:not(.focused) {
+      filter: sepia(1) blur(5px) brightness(0.2);
+      opacity: 0.4;
+    }
+
+    .wrapper:not(.has-focus) .character:hover {
+      filter: sepia(0.05) blur(0px) brightness(1)
+              drop-shadow(0 0 22px var(--blue-bright));
+    }
+
+    /* ═══════════════════════════════════
+       PAGE-LOAD BLUR REVEAL
+    ═══════════════════════════════════ */
+    @keyframes blur-reveal {
+      from { filter: sepia(1) blur(60px) brightness(0.05); opacity: 0; scale: 0.3; }
+      to   { filter: sepia(1) blur(2.5px) brightness(0.55); opacity: 1; scale: 0.72; }
+    }
+
+    .character.reveal-anim { animation: blur-reveal 900ms ease-out forwards !important; }
+    .character:nth-child(1).reveal-anim { animation-delay: 0ms   !important; }
+    .character:nth-child(2).reveal-anim { animation-delay: 150ms !important; }
+    .character:nth-child(3).reveal-anim { animation-delay: 300ms !important; }
+    .character:nth-child(4).reveal-anim { animation-delay: 450ms !important; }
+    .character:nth-child(5).reveal-anim { animation-delay: 600ms !important; }
+
+    /* ═══════════════════════════════════
+       MISC UI
+    ═══════════════════════════════════ */
+    .mouse { display: none !important; }
+
+    .hint {
+      position: fixed;
+      bottom: 1.2rem;
+      left: 50%;
+      translate: -50% 0;
+      color: var(--blue-bright);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 0.82rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 300;
+      animation: hint-fade 4s ease-in-out 2s forwards;
+    }
+
+    @keyframes hint-fade {
+      0%, 70% { opacity: 0.7; }
+      100%    { opacity: 0; }
+    }
+
+    .close-btn {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: rgba(0, 100, 255, 0.2);
+      border: 1px solid var(--blue-bright);
+      color: var(--blue-bright);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.45rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 300ms, background 200ms, box-shadow 200ms;
+      letter-spacing: 0.1em;
+      z-index: 999;
+      text-transform: uppercase;
+    }
+
+    .close-btn.visible { opacity: 1; pointer-events: all; }
+    .close-btn:hover   { background: rgba(0,150,255,0.35); box-shadow: 0 0 16px var(--blue-bright); }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- LOGO: true background, z-index -999, full original color -->
+  <div id="bg-logo">
+    <img src="LOGO.jpg" alt="Logo">
+  </div>
+
+  <!-- Character name overlay -->
+  <div class="names">
+    <h2 data-index="0">Rahat</h2>
+    <h2 data-index="1">Tamim</h2>
+    <h2 data-index="2">Hasnat</h2>
+    <h2 data-index="3">Tanvir</h2>
+    <h2 data-index="4">Abir</h2>
+  </div>
+
+  <!-- Characters -->
+  <div class="wrapper">
+
+    <div class="character reveal-anim" data-index="0">
+      <img src="Rahat.jpg" width="300" alt="Rahat">
+      <div class="data">
+        <h3>Rahat</h3>
+        <div>
+          <label>Role:</label><p>1st Rusher</p>
+          <label>Position:</label><p>Captain of the USS</p>
+          <label>Known for:</label><p>"1v4 Clutch"</p>
+        </div>
+        <p class="notes">Bold, strategic thinker, morally driven, thrives under pressure.</p>
+      </div>
+    </div>
+
+    <div class="character reveal-anim" data-index="1">
+      <img src="Tamim.jpg" width="300" alt="Tamim">
+      <div class="data">
+        <h3>Tamim</h3>
+        <div>
+          <label>Role:</label><p>2nd Rusher</p>
+          <label>Position:</label><p>Sync with 1st Rusher</p>
+          <label>Known for:</label><p>"Perfect Healer" 🖖</p>
+        </div>
+        <p class="notes">Logical, restrained, intellectually brilliant.</p>
+      </div>
+    </div>
+
+    <div class="character reveal-anim" data-index="2">
+      <img src="Hasnat.jpg" width="300" alt="Hasnat">
+      <div class="data">
+        <h3>Hasnat</h3>
+        <div>
+          <label>Role:</label><p>Sniper</p>
+          <label>Position:</label><p>Long Range Fighter</p>
+          <label>Known for:</label><p>"King of Long Range"</p>
+        </div>
+        <p class="notes">Can do 1v4 in long range.</p>
+      </div>
+    </div>
+
+    <div class="character reveal-anim" data-index="3">
+      <img src="Tanvir.jpg" width="300" alt="Tanvir">
+      <div class="data">
+        <h3>Tanvir</h3>
+        <div>
+          <label>Role:</label><p>Neder</p>
+          <label>Position:</label><p>Perfect Bomber</p>
+          <label>Known for:</label><p>Winning Instance Fight</p>
+        </div>
+        <p class="notes">Intelligent, poised, confident, culturally aware.</p>
+      </div>
+    </div>
+
+    <div class="character reveal-anim" data-index="4">
+      <img src="Abir.jpg" width="300" alt="Abir">
+      <div class="data">
+        <h3>Abir</h3>
+        <div>
+          <label>Role:</label><p>Supporter</p>
+          <label>Position:</label><p>Perfect Supporter</p>
+          <label>Known for:</label><p>"Finisher"</p>
+        </div>
+        <p class="notes">Brilliant Supporter.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <button class="close-btn" id="closeBtn">✕ Close</button>
+  <p class="hint">👆 Click a character to reveal</p>
+
+  <script src="./script.js"></script>
+  <script>
+    setTimeout(() => {
+      document.querySelectorAll('.character.reveal-anim').forEach(el => {
+        el.classList.remove('reveal-anim');
+      });
+    }, 2200);
+  </script>
+
+</body>
+</html>
